@@ -4,7 +4,6 @@ import com.sun.istack.NotNull;
 
 import javax.persistence.*;
 import java.sql.Timestamp;
-import java.time.Instant;
 
 @Entity
 @Table(name = "users")
@@ -46,7 +45,6 @@ public class User {
         this.email = email;
         this.mobileNumber = mobileNumber;
         this.status = status;
-        this.timestampStatus = Timestamp.from(Instant.now());
     }
 
     public User() {
