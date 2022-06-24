@@ -99,4 +99,16 @@ public class User {
     }
 
 
+    @Override
+    public String toString() {
+        return "User{" +
+                "id=" + id +
+                ", imageURI='" + imageURI + '\'' +
+                ", userName='" + userName + '\'' +
+                ", email='" + email + '\'' +
+                ", mobileNumber='" + mobileNumber + '\'' +
+                ", status='" + status + '\'' +
+                ", timestampStatus=" + timestampStatus +
+                '}';
+    }
 }

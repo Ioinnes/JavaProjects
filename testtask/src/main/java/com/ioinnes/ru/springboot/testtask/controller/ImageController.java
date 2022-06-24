@@ -15,7 +15,7 @@ public class ImageController {
     private ImageProcessor imageProcessor;
 
     @PostMapping("/upload")
-    public CompletableFuture<URI> uploadMessage(@RequestParam("image") MultipartFile multipartFile) {
+    public CompletableFuture<URI> uploadMessage(@RequestPart("image") MultipartFile multipartFile) {
         return CompletableFuture.supplyAsync(() -> imageProcessor.processUploadImage(multipartFile));
     }
 }

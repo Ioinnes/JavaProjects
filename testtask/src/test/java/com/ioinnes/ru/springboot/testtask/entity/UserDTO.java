@@ -1,6 +1,7 @@
 package com.ioinnes.ru.springboot.testtask.entity;
 
 import java.sql.Timestamp;
+import java.util.Objects;
 
 public class UserDTO {
     private int id;
@@ -92,5 +93,18 @@ public class UserDTO {
                 ", status='" + status + '\'' +
                 ", timestampStatus=" + timestampStatus +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        UserDTO userDTO = (UserDTO) o;
+        return id == userDTO.id && imageURI.equals(userDTO.imageURI) && userName.equals(userDTO.userName) && email.equals(userDTO.email) && Objects.equals(mobileNumber, userDTO.mobileNumber) && status.equals(userDTO.status) && timestampStatus.equals(userDTO.timestampStatus);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, imageURI, userName, email, mobileNumber, status, timestampStatus);
     }
 }

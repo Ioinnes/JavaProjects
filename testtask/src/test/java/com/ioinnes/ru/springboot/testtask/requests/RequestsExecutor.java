@@ -61,4 +61,34 @@ public class RequestsExecutor {
                 .statusCode(200)
                 .extract().body().asString();
     }
+
+    public String executePostImageRequest(RequestSpecification requestSpecification) {
+        return given()
+                .spec(requestSpecification)
+                .when()
+                .post()
+                .then()
+                .statusCode(200)
+                .extract().asString();
+    }
+
+    public UserDTO[] executeGetWithConditionRequest(RequestSpecification requestSpecification) {
+        return given()
+                .spec(requestSpecification)
+                .when()
+                .get()
+                .then()
+                .statusCode(200)
+                .extract().as(UserDTO[].class);
+    }
+
+    public UserDTO[] executeGetAllRequest(RequestSpecification requestSpecification) {
+        return given()
+                .spec(requestSpecification)
+                .when()
+                .get()
+                .then()
+                .statusCode(200)
+                .extract().as(UserDTO[].class);
+    }
 }

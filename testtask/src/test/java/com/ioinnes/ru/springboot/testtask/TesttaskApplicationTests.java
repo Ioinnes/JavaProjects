@@ -1,9 +1,12 @@
 package com.ioinnes.ru.springboot.testtask;
 
+import com.ioinnes.ru.springboot.testtask.auxiliry.StringGenerator;
+import com.ioinnes.ru.springboot.testtask.auxiliry.ValidChecker;
 import com.ioinnes.ru.springboot.testtask.entity.UserDTO;
 import com.ioinnes.ru.springboot.testtask.requests.RequestsCreator;
 import com.ioinnes.ru.springboot.testtask.requests.RequestsExecutor;
 import com.jayway.restassured.specification.RequestSpecification;
+import org.apache.tomcat.util.threads.ThreadPoolExecutor;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,6 +14,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -36,7 +46,8 @@ class TesttaskApplicationTests {
 
 		try {
 			userDTO = requestsExecutor.executeExistingIDGetRequest(requestSpecification);
-		} catch (Exception ignore) {}
+		} catch (Exception ignore) {
+		}
 
 		assertThat(userDTO).isNotNull();
 		assertThat(userDTO.getUserName()).isEqualTo("Ioinnes");
@@ -65,8 +76,8 @@ class TesttaskApplicationTests {
 	@Test
 	public void postUserRequestTest() {
 		String imageURI = null;
-		String username = "POP";
-		String email = "qwerty@qwerty.oo";
+		String username = "PPrefer";
+		String email = "qwrrffefrwty@qwerty.oo";
 		String mobileNumber = null;
 		RequestSpecification postRequestSpecification =
 				requestsCreator.createPostRequestSpecification(imageURI, username, email, mobileNumber);
@@ -75,7 +86,7 @@ class TesttaskApplicationTests {
 
 		int id = 0;
 		// get id
-		if (response.matches("User with id = \\d+ was added")) {
+		if (response.matches("User with id = \\d+ was added.")) {
 			Pattern pattern = Pattern.compile("\\b\\d+\\b");
 			Matcher matcher = pattern.matcher(response);
 			if (matcher.find())
@@ -115,7 +126,6 @@ class TesttaskApplicationTests {
 
 		assertThat(requestsExecutor.executeNotExistingIDGetRequest(getRequestSpecification)).isEqualTo("");
 	}
-
 
 
 	@Test
@@ -158,4 +168,96 @@ class TesttaskApplicationTests {
 		assertThat(previousUserCondition.getImageURI()).isEqualTo(previousConditionWithDifferenceInTimestamp.getImageURI());
 		assertThat(previousUserCondition.getMobileNumber()).isEqualTo(previousConditionWithDifferenceInTimestamp.getMobileNumber());
 	}
+
+	@Test
+	public void getWithConditionOnlineRequestTest() {
+		// check get with parametr status = "online" works properly
+		RequestSpecification requestSpecificationOnline =
+				requestsCreator.createGetWithConditionRequestCondition("online", null);
+
+		UserDTO[] onlineResult = requestsExecutor.executeGetWithConditionRequest(requestSpecificationOnline);
+
+		for (int i = 0; i < onlineResult.length; i++) {
+			assertThat(onlineResult[i].getStatus()).isEqualTo("online");
+			if (i != onlineResult.length - 1)
+				assertThat(onlineResult[i].getTimestampStatus())
+						.isBeforeOrEqualTo(onlineResult[i + 1].getTimestampStatus());
+		}
+	}
+
+	@Test
+	public void getWithConditionOfflineRequestTest() {
+		// same for status = "offline"
+		RequestSpecification requestSpecification =
+				requestsCreator.createGetWithConditionRequestCondition("offline", null);
+
+		UserDTO[] offlineResult = requestsExecutor.executeGetWithConditionRequest(requestSpecification);
+
+
+		for (int i = 0; i < offlineResult.length; i++) {
+			assertThat(offlineResult[i].getStatus()).isEqualTo("offline");
+			if (i != offlineResult.length - 1)
+				assertThat(offlineResult[i].getTimestampStatus())
+						.isBeforeOrEqualTo(offlineResult[i + 1].getTimestampStatus());
+		}
+	}
+
+	@Test
+	public void getWithConditionTimestampRequestTest() {
+		// same for status = "offline"
+		RequestSpecification requestSpecification =
+				requestsCreator.createGetWithConditionRequestCondition(null, 26);
+
+		UserDTO[] result = requestsExecutor.executeGetWithConditionRequest(requestSpecification);
+
+		for (int i = 0; i < result.length - 1; i++) {
+			if (result[i].getStatus().equals(result[i + 1].getStatus()))
+				assertThat(result[i].getTimestampStatus()).isBeforeOrEqualTo(result[i + 1].getTimestampStatus());
+		}
+	}
+
+	@Test
+	public void getWithConditionTimestampAndRequestTest() {
+		RequestSpecification requestSpecification =
+				requestsCreator.createGetWithConditionRequestCondition("online", 26);
+
+		UserDTO[] result = requestsExecutor.executeGetWithConditionRequest(requestSpecification);
+
+		for (int i = 0; i < result.length - 1; i++) {
+			assertThat(result[i].getStatus()).isEqualTo("online");
+			if (result[i].getStatus().equals(result[i + 1].getStatus()))
+				assertThat(result[i].getTimestampStatus()).isBeforeOrEqualTo(result[i + 1].getTimestampStatus());
+		}
+	}
+
+	@Test
+	public void getWithConditionWithoutCondRequestTest() {
+		RequestSpecification requestSpecification =
+				requestsCreator.createGetWithConditionRequestCondition(null, null);
+
+		UserDTO[] result = requestsExecutor.executeGetWithConditionRequest(requestSpecification);
+
+		// now we will get all and check result
+		RequestSpecification requestSpecification1 =
+				requestsCreator.createGetAllRequestSpecification();
+
+		UserDTO[] expected = requestsExecutor.executeGetAllRequest(requestSpecification1);
+
+		for (UserDTO userDTO : expected) {
+			assertThat(userDTO).isIn(result);
+		}
+	}
+
+
+	@Test
+	public void postImageRequestTest() throws IOException {
+		RequestSpecification requestSpecification =
+				requestsCreator.createPostImageRequestSpecification(
+						new File("/home/ubuntu/Рабочий стол/testcat.jpg"));
+
+
+		System.out.println(requestsExecutor.executePostImageRequest(requestSpecification));
+	}
+
 }
+
